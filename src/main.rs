@@ -76,6 +76,7 @@ fn solve_days(days: &[(Day, &str)]) -> Vec<Option<TimedBoxes>> {
         .map(|(day, s)| match day {
             Day(1) => to_boxed(days::day01::solve, s),
             Day(2) => to_boxed(days::day02::solve, s),
+            Day(3) => to_boxed(days::day03::solve, s),
             _ => None,
         })
         .collect()
