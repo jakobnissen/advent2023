@@ -77,6 +77,7 @@ fn solve_days(days: &[(Day, &str)]) -> Vec<Option<TimedBoxes>> {
             Day(1) => to_boxed(days::day01::solve, s),
             Day(2) => to_boxed(days::day02::solve, s),
             Day(3) => to_boxed(days::day03::solve, s),
+            Day(4) => to_boxed(days::day04::solve, s),
             _ => None,
         })
         .collect()
@@ -96,7 +97,7 @@ fn print_solution(day: Day, solution: Option<TimedBoxes>) {
 fn solve<T: AsRef<str>>(data_dir: &Path, day_strings: &[T]) {
     if !data_dir.is_dir() {
         eprint!(
-            "Data directory is not an existing file: \"{:#?}\"",
+            "Data directory is not an existing file: {:#?}",
             data_dir
         );
         std::process::exit(1)
