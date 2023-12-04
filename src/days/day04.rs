@@ -9,15 +9,18 @@ pub fn solve(s: &str) -> (usize, usize) {
         for (i, n) in left.split_ascii_whitespace().enumerate() {
             left_side[i] = n.parse().unwrap()
         }
-        let n_overlap = right.split_ascii_whitespace().filter(|n| left_side.contains(&n.parse::<u8>().unwrap())).count();
+        let n_overlap = right
+            .split_ascii_whitespace()
+            .filter(|n| left_side.contains(&n.parse::<u8>().unwrap()))
+            .count();
         if n_overlap > 0 {
-            p1 += 2_usize.pow((n_overlap-1) as u32);
+            p1 += 2_usize.pow((n_overlap - 1) as u32);
         }
         let copy = copies[0];
         copies.rotate_left(1);
-        copies[LEN-1] = 1;
-        for i in 0..n_overlap {
-            copies[i] += copy
+        copies[LEN - 1] = 1;
+        for i in copies.iter_mut().take(n_overlap) {
+            *i += copy
         }
         p2 += copy;
     }

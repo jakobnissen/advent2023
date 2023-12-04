@@ -13,11 +13,12 @@ struct Game(Vec<Draw>);
 
 impl Game {
     fn is_possible(&self, max: Draw) -> bool {
-        self.0.iter().all(|draw| {
-            draw.0.iter().zip(max.0.iter()).all(|(a, b)| a <= b)
-        })
+        self.0
+            .iter()
+            .all(|draw| draw.0.iter().zip(max.0.iter()).all(|(a, b)| a <= b))
     }
 
+    #[allow(clippy::needless_range_loop)]
     fn max_drawn(&self) -> Draw {
         let mut result = Draw::empty().0;
         for d in self.0.iter() {
@@ -38,9 +39,9 @@ fn parse_draw(s: &str) -> Draw {
         let (a, b) = cube.trim().split_once(' ').unwrap();
         let n = a.parse::<u32>().unwrap();
         match b {
-            "red" => {result.0[0] = n},
-            "green" => {result.0[1] = n},
-            "blue" => {result.0[2] = n},
+            "red" => result.0[0] = n,
+            "green" => result.0[1] = n,
+            "blue" => result.0[2] = n,
             _ => unreachable!(),
         };
     }
@@ -54,7 +55,11 @@ fn parse_game(s: &str) -> Game {
 }
 
 fn parse(s: &str) -> Vec<Game> {
-    s.lines().map(str::trim).filter(|s| !s.is_empty()).map(parse_game).collect()
+    s.lines()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(parse_game)
+        .collect()
 }
 
 // TODO Slice of as ref slice?
@@ -62,7 +67,12 @@ fn solve_parsed(v: &[Game]) -> (usize, usize) {
     v.iter().enumerate().fold((0, 0), |(p1, p2), (i, game)| {
         (
             p1 + (i + 1) * (game.is_possible(MAX_DRAW) as usize),
-            p2 + game.max_drawn().0.iter().map(|i| *i as usize).product::<usize>()
+            p2 + game
+                .max_drawn()
+                .0
+                .iter()
+                .map(|i| *i as usize)
+                .product::<usize>(),
         )
     })
 }

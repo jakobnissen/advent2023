@@ -96,15 +96,12 @@ fn print_solution(day: Day, solution: Option<TimedBoxes>) {
 
 fn solve<T: AsRef<str>>(data_dir: &Path, day_strings: &[T]) {
     if !data_dir.is_dir() {
-        eprint!(
-            "Data directory is not an existing file: {:#?}",
-            data_dir
-        );
+        eprint!("Data directory is not an existing file: {:#?}", data_dir);
         std::process::exit(1)
     }
     // TODO: Print timings (parsing + solving)
     let days = parse_days(day_strings);
-    let data: Vec<(Day, String)> = load_days(&data_dir, &days);
+    let data: Vec<(Day, String)> = load_days(data_dir, &days);
     let solutions = solve_days(
         &data
             .iter()
@@ -134,7 +131,7 @@ fn download(data_dir: &Path, day_strings: &[String]) {
         );
         std::process::exit(1)
     }
-    let days = parse_days(&day_strings);
+    let days = parse_days(day_strings);
     if days.is_empty() {
         return;
     }

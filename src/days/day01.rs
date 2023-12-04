@@ -49,3 +49,25 @@ pub fn solve(s: &str) -> (usize, usize) {
             (p1 + usize::from(p1_new), p2 + usize::from(p2_new))
         })
 }
+
+#[cfg(test)]
+mod tests {
+    static TEST_STR_1: &str = "1abc2
+    pqr3stu8vwx
+    a1b2c3d4e5f
+    treb7uchet";
+
+    static TEST_STR_2: &str = "two1nine
+    abcone2threexyz
+    3twoone
+    xtwone3four
+    4nineeightseven2
+    zoneight234
+    7pqrstsixteen";
+
+    #[test]
+    fn test() {
+        assert_eq!(super::solve(TEST_STR_1), (142, 142));
+        assert_eq!(super::solve(TEST_STR_2), (242, 229));
+    }
+}

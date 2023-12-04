@@ -58,6 +58,7 @@ fn parse(s: &str) -> Vec<Vec<Cell>> {
     result
 }
 
+#[allow(clippy::needless_range_loop)]
 fn solve_parsed(matrix: &[Vec<Cell>]) -> (usize, usize) {
     let mut p1: usize = 0;
     let mut p2 = 0;
