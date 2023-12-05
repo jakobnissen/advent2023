@@ -1,8 +1,4 @@
-// TODO: If pick day not impl, do not error if file does not exist.
-// 1. Parse days
-// 2. Fetch functions for each day
-// 3. Fetch data for each day
-// 4. Compute and print
+// TODO: Add a proper error framework - anyhow?
 
 mod days;
 
@@ -18,16 +14,26 @@ use reqwest::blocking::Client;
 
 type TimedBoxes = (Duration, Box<dyn Display>, Box<dyn Display>);
 
-fn to_boxed<F, A, B>(f: F, s: &str) -> Option<TimedBoxes>
+enum Solution {
+    Unimplemented,
+    Done(TimedBoxes),
+}
+
+fn to_boxed<F, A, B>(f: F, day: Day, s: Option<&str>) -> Solution
 where
     F: Fn(&str) -> (A, B),
     A: Display + 'static,
     B: Display + 'static,
 {
+    let string = s.unwrap_or_else(|| {
+        // TODO: Properly propagate error
+        eprintln!("Could not read input file of day {:0>2}", { day.0 });
+        std::process::exit(1)
+    });
     let start = std::time::Instant::now();
-    let (a, b) = f(s);
+    let (a, b) = f(string);
     let elapsed = start.elapsed();
-    Some((elapsed, Box::new(a), Box::new(b)))
+    Solution::Done((elapsed, Box::new(a), Box::new(b)))
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -38,12 +44,12 @@ impl Day {
     fn from_str(s: &str) -> Self {
         match s.parse::<u8>() {
             Err(_) => {
-                eprint!("Error: Cannot parse \"{s}\" as integer in 1-25.");
+                eprintln!("Error: Cannot parse \"{s}\" as integer in 1-25.");
                 std::process::exit(1);
             }
             Ok(n) => {
                 if !(1..=25).contains(&n) {
-                    eprint!("Error: Day {n} not in 1-25.");
+                    eprintln!("Error: Day {n} not in 1-25.");
                     std::process::exit(1);
                 }
                 Day(n)
@@ -60,53 +66,70 @@ fn parse_days<T: AsRef<str>>(v: &[T]) -> Vec<Day> {
 }
 
 // TODO: Add proper errors
-fn load_day(path: &Path) -> String {
-    std::fs::read_to_string(path).unwrap()
+fn load_day(path: &Path) -> Option<String> {
+    std::fs::read_to_string(path).ok()
 }
 
 // TODO: Handle errors
-fn load_days(dir: &Path, days: &[Day]) -> Vec<(Day, String)> {
+fn load_days(dir: &Path, days: &[Day]) -> Vec<(Day, Option<String>)> {
     days.iter()
         .map(|&day| (day, load_day(&dir.join(format!("day{:02}.txt", day.0)))))
         .collect()
 }
 
-fn solve_days(days: &[(Day, &str)]) -> Vec<Option<TimedBoxes>> {
+fn solve_days(days: &[(Day, Option<&str>)]) -> Vec<Solution> {
     days.iter()
         .map(|(day, s)| match day {
-            Day(1) => to_boxed(days::day01::solve, s),
-            Day(2) => to_boxed(days::day02::solve, s),
-            Day(3) => to_boxed(days::day03::solve, s),
-            Day(4) => to_boxed(days::day04::solve, s),
-            Day(5) => to_boxed(days::day05::solve, s),
-            _ => None,
+            Day(1) => to_boxed(days::day01::solve, *day, *s),
+            Day(2) => to_boxed(days::day02::solve, *day, *s),
+            Day(3) => to_boxed(days::day03::solve, *day, *s),
+            Day(4) => to_boxed(days::day04::solve, *day, *s),
+            Day(5) => to_boxed(days::day05::solve, *day, *s),
+            _ => Solution::Unimplemented,
         })
         .collect()
 }
 
-fn print_solution(day: Day, solution: Option<TimedBoxes>) {
+fn print_solution(day: Day, solution: Solution) {
     print!("Day {:02}", day.0);
-    if let Some((duration, a, b)) = solution {
-        println!(" [{:.2?}]:", duration);
-        println!("  Part 1: {}", a);
-        println!("  Part 2: {}\n", b);
-    } else {
-        println!(":\n  Unimplemented!\n")
+    match solution {
+        Solution::Done((duration, a, b)) => {
+            println!(" [{:.2?}]:", duration);
+            println!("  Part 1: {}", a);
+            println!("  Part 2: {}\n", b);
+        }
+        Solution::Unimplemented => println!(":\n  Unimplemented!\n"),
     }
 }
 
-fn solve<T: AsRef<str>>(data_dir: &Path, day_strings: &[T]) {
+fn solve<T: AsRef<str>>(data_dir: &Path, day_strings: Option<Vec<T>>, all: bool) {
     if !data_dir.is_dir() {
-        eprint!("Data directory is not an existing file: {:#?}", data_dir);
+        eprintln!(
+            "Data directory is not an existing directory: {:#?}",
+            data_dir
+        );
         std::process::exit(1)
     }
     // TODO: Print timings (parsing + solving)
-    let days = parse_days(day_strings);
-    let data: Vec<(Day, String)> = load_days(data_dir, &days);
+    // Get list of days
+    let days = if all {
+        if day_strings.is_some() {
+            eprintln!("If --all days is set, individual days cannot be listed");
+            std::process::exit(1);
+        }
+        (1..=25).map(Day).collect::<Vec<_>>()
+    } else if let Some(v) = day_strings {
+            parse_days(&v)
+    } else {
+        eprintln!("No days chosen to solve");
+        std::process::exit(1);
+    };
+    // Load data for each day
+    let data: Vec<(Day, Option<String>)> = load_days(data_dir, &days);
     let solutions = solve_days(
         &data
             .iter()
-            .map(|(d, s)| (*d, s.as_str()))
+            .map(|(d, s)| (*d, s.as_ref().map(|i| i.as_ref())))
             .collect::<Vec<_>>(),
     );
     for (&day, solution) in days.iter().zip(solutions) {
@@ -182,7 +205,9 @@ fn download_input(client: &Client, day: Day) -> String {
 enum Commands {
     Solve {
         data_dir: PathBuf,
-        day_strings: Vec<String>,
+        day_strings: Option<Vec<String>>,
+        #[arg(long)]
+        all: bool,
     },
     Download {
         data_dir: PathBuf,
@@ -203,7 +228,8 @@ fn main() {
         Commands::Solve {
             data_dir,
             day_strings,
-        } => solve(&data_dir, &day_strings),
+            all,
+        } => solve(&data_dir, day_strings, all),
         Commands::Download {
             data_dir,
             day_strings,
