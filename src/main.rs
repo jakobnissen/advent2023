@@ -108,9 +108,9 @@ fn print_solution(day: Day, solution: Option<TimedBoxes>) {
     }
 }
 
-fn solve<T: AsRef<str>>(data_dir: &Path, day_strings: Option<Vec<T>>, all: bool) {
+fn get_days(day_strings: Option<Vec<String>>, all: bool) -> Vec<Day> {
     // Parse the day strings into a list of days
-    let days = if all {
+    if all {
         if day_strings.is_some() {
             eprintln!("If --all days is set, individual days cannot be listed");
             std::process::exit(1);
@@ -119,9 +119,14 @@ fn solve<T: AsRef<str>>(data_dir: &Path, day_strings: Option<Vec<T>>, all: bool)
     } else if let Some(v) = day_strings {
         parse_days(&v)
     } else {
-        eprintln!("No days chosen to solve");
+        eprintln!("No days chosen");
         std::process::exit(1);
-    };
+    }
+}
+
+fn solve(data_dir: &Path, day_strings: Option<Vec<String>>, all: bool) {
+    // Parse the day strings into a list of days
+    let days = get_days(day_strings, all);
 
     // Get the functions corresponding to the days, or None if the functions
     // have not been implemented
@@ -171,7 +176,7 @@ fn solve<T: AsRef<str>>(data_dir: &Path, day_strings: Option<Vec<T>>, all: bool)
     }
 }
 
-fn download(data_dir: &Path, day_strings: &[String]) {
+fn download(data_dir: &Path, day_strings: Option<Vec<String>>, all: bool) {
     // Make dir and verify it exists
     if !data_dir.exists() {
         if data_dir.parent().is_none() {
@@ -189,10 +194,7 @@ fn download(data_dir: &Path, day_strings: &[String]) {
         );
         std::process::exit(1)
     }
-    let days = parse_days(day_strings);
-    if days.is_empty() {
-        return;
-    }
+    let days = get_days(day_strings, all);
     let client_cell: OnceCell<Client> = OnceCell::new();
     for day in days.iter() {
         let path = data_dir.join(format!("day{:0>2}.txt", day.0));
@@ -201,10 +203,18 @@ fn download(data_dir: &Path, day_strings: &[String]) {
         } else {
             println!("Downloading day {:0>2}", day.0);
             let client = client_cell.get_or_init(make_client);
-            let data = download_input(client, *day);
-            std::fs::write(path, data).unwrap() // TODO: Proper error
+            if let Some(data) = download_input(client, *day) {
+                std::fs::write(path, data).unwrap()
+            } else {
+                eprintln!("Day {:0>2} is not released yet!", day.0);
+                if !all {
+                    std::process::exit(1)
+                }
+                break;
+            }
         }
     }
+    // NOTE: If --all is passed, the day list is still untruncated here
 }
 
 fn make_client() -> Client {
@@ -225,14 +235,20 @@ fn make_client() -> Client {
     Client::builder().default_headers(headers).build().unwrap()
 }
 
-fn download_input(client: &Client, day: Day) -> String {
+// If the day is not released yet, return None
+fn download_input(client: &Client, day: Day) -> Option<String> {
     let url = format!("https://adventofcode.com/2023/day/{}/input", day.0);
     let resp = client.get(url.as_str()).send().unwrap();
     if !resp.status().is_success() {
-        eprintln!("Error when processing request:\n{}", resp.text().unwrap());
-        std::process::exit(1);
+        let text = resp.text().unwrap();
+        if text.contains("Please don't repeatedly request this endpoint before it unlocks") {
+            return None;
+        } else {
+            eprintln!("Error when processing request:\n{}", text);
+            std::process::exit(1);
+        }
     }
-    resp.text().unwrap()
+    Some(resp.text().unwrap())
 }
 
 #[derive(Subcommand)]
@@ -245,7 +261,9 @@ enum Commands {
     },
     Download {
         data_dir: PathBuf,
-        day_strings: Vec<String>,
+        day_strings: Option<Vec<String>>,
+        #[arg(long)]
+        all: bool,
     }, // TODO: Add benchmark (reading, parsing, solving)
 }
 
@@ -267,6 +285,7 @@ fn main() {
         Commands::Download {
             data_dir,
             day_strings,
-        } => download(&data_dir, &day_strings),
+            all,
+        } => download(&data_dir, day_strings, all),
     }
 }
