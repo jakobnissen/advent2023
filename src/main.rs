@@ -80,12 +80,13 @@ fn load_days(dir: &Path, days: &[Day]) -> Vec<(Day, Option<String>)> {
 fn solve_days(days: &[(Day, Option<&str>)]) -> Vec<Solution> {
     days.iter()
         .map(|(day, s)| match day {
-            Day(1) => to_boxed(days::day01::solve, *day, *s),
-            Day(2) => to_boxed(days::day02::solve, *day, *s),
-            Day(3) => to_boxed(days::day03::solve, *day, *s),
-            Day(4) => to_boxed(days::day04::solve, *day, *s),
-            Day(5) => to_boxed(days::day05::solve, *day, *s),
-            _ => Solution::Unimplemented,
+            Day(1) => to_boxed(days::day01::solve, s),
+            Day(2) => to_boxed(days::day02::solve, s),
+            Day(3) => to_boxed(days::day03::solve, s),
+            Day(4) => to_boxed(days::day04::solve, s),
+            Day(5) => to_boxed(days::day05::solve, s),
+            Day(6) => to_boxed(days::day06::solve, s),
+            _ => None,
         })
         .collect()
 }
