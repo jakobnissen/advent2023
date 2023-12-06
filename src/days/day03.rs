@@ -9,7 +9,7 @@ pub fn solve(s: &str) -> (usize, usize) {
 
 #[derive(Clone, Copy, Debug)]
 enum Cell {
-    Number { value: u32, id: u32 },
+    Number { value: u16, id: u16 },
     Star,
     Other,
     None,
@@ -21,16 +21,16 @@ fn parse(s: &str) -> Vec<Vec<Cell>> {
     let ncol = lines[0].len();
     // TODO: Check same col
     let mut result = vec![vec![Cell::None; ncol]; nrow];
-    let mut id: u32 = 0;
+    let mut id: u16 = 0;
     for (row, line) in lines.iter().enumerate() {
         let mut first = usize::MAX;
-        let mut value: u32 = 0;
+        let mut value: u16 = 0;
         for (col, &byte) in line.as_bytes().iter().enumerate() {
             if (0x30..=0x39).contains(&byte) {
                 if first == usize::MAX {
                     first = col;
                 }
-                value = 10 * value + (byte - 0x30) as u32;
+                value = 10 * value + (byte - 0x30) as u16;
                 continue;
             } else if first != usize::MAX {
                 for i in first..col {
@@ -62,8 +62,8 @@ fn parse(s: &str) -> Vec<Vec<Cell>> {
 fn solve_parsed(matrix: &[Vec<Cell>]) -> (usize, usize) {
     let mut p1: usize = 0;
     let mut p2 = 0;
-    let mut seen_p1_numbers: HashSet<u32> = HashSet::new();
-    let mut star_neighbors: HashSet<(u32, u32)> = HashSet::new();
+    let mut seen_p1_numbers: HashSet<u16> = HashSet::new();
+    let mut star_neighbors: HashSet<(u16, u16)> = HashSet::new();
     let nrow = matrix.len();
     let ncol = matrix[0].len();
     for (row, v) in matrix.iter().enumerate() {
