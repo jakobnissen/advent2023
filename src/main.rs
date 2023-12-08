@@ -95,6 +95,7 @@ fn get_solver(day: Day) -> Option<BoxedFn> {
         Day(4) => wrapper(days::day04::solve),
         Day(5) => wrapper(days::day05::solve),
         Day(6) => wrapper(days::day06::solve),
+        Day(7) => wrapper(days::day07::solve),
         _ => None,
     }
 }
