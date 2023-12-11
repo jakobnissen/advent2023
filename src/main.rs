@@ -98,6 +98,8 @@ fn get_solver(day: Day) -> Option<BoxedFn> {
         Day(7) => wrapper(days::day07::solve),
         Day(8) => wrapper(days::day08::solve),
         Day(9) => wrapper(days::day09::solve),
+        Day(10) => None,
+        Day(11) => wrapper(days::day11::solve),
         _ => None,
     }
 }
@@ -174,8 +176,8 @@ fn solve(data_dir: &Path, day_strings: Option<Vec<String>>, all: bool) {
         .collect();
 
     // Print the time taken for the solutions
-    for (&day, solution) in days.iter().zip(solutions) {
-        print_solution(day, solution)
+    for ((day, _), solution) in data.iter().zip(solutions) {
+        print_solution(*day, solution)
     }
 }
 
