@@ -10,6 +10,16 @@ use std::{
     time::Duration,
 };
 
+#[allow(unused)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Unimplemented;
+
+impl Display for Unimplemented {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("< Part two not yet implemented! >")
+    }
+}
+
 use clap::{self, Parser, Subcommand};
 use reqwest::blocking::Client;
 
@@ -76,10 +86,11 @@ fn load_days<'a, T>(
         .collect()
 }
 
-fn wrapper<F, R>(f: F) -> Option<BoxedFn>
+fn wrapper<F, R1, R2>(f: F) -> Option<BoxedFn>
 where
-    R: Display + 'static,
-    F: Fn(&str) -> (R, R) + 'static,
+    R1: Display + 'static,
+    R2: Display + 'static,
+    F: Fn(&str) -> (R1, R2) + 'static,
 {
     Some(Box::new(move |s| {
         let (a, b) = f(s);
@@ -98,7 +109,7 @@ fn get_solver(day: Day) -> Option<BoxedFn> {
         Day(7) => wrapper(days::day07::solve),
         Day(8) => wrapper(days::day08::solve),
         Day(9) => wrapper(days::day09::solve),
-        Day(10) => None,
+        Day(10) => wrapper(days::day10::solve),
         Day(11) => wrapper(days::day11::solve),
         _ => None,
     }

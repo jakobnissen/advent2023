@@ -134,7 +134,7 @@ fn parse(s: &str) -> Parsed {
         .chunks_exact(2)
         .map(|c| Span(c[0], c[0] + c[1] - 1))
         .collect();
-    let mut maps: Vec<_> = vec![];
+    let mut maps: Vec<_> = Vec::new();
     for line in lines {
         if line.starts_with(|c: char| c.is_ascii_alphabetic()) {
             maps.push(Vec::new());
